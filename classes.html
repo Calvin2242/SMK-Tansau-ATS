@@ -24,10 +24,25 @@
     <input type="text" id="newClassName" placeholder="Class Name (e.g. 2 Mutiara)">
     <br><br>
 
-    <input type="file" id="studentFile" accept=".csv">
+    <label>
+        <input type="radio" name="inputMethod" value="file" checked onclick="toggleInputMethod()"> Upload CSV
+    </label>
+    <label>
+        <input type="radio" name="inputMethod" value="manual" onclick="toggleInputMethod()"> Manual Entry
+    </label>
     <br><br>
 
-    <button onclick="downloadSample()">Download Name List Sample</button>
+    <div id="fileUploadSection">
+        <input type="file" id="studentFile" accept=".csv">
+        <button onclick="downloadSample()">Download CSV Sample</button>
+    </div>
+
+    <div id="manualEntrySection" style="display: none;">
+        <p><small>Enter names (one per line):</small></p>
+        <textarea id="manualStudentList" rows="5" placeholder="Ali&#10;Aisyah&#10;Daniel"></textarea>
+    </div>
+
+    <br>
     <button onclick="createClass()">Create Class</button>
 </section>
 
@@ -53,18 +68,50 @@ function downloadSample() {
 
 function createClass() {
     const className = document.getElementById("newClassName").value.trim();
-    const fileInput = document.getElementById("studentFile");
+    const method = document.querySelector('input[name="inputMethod"]:checked').value;
 
-    if (!className || !fileInput.files[0]) {
-        alert("Please enter class name and upload student list.");
+    if (!className) {
+        alert("Please enter class name.");
         return;
     }
 
-    const reader = new FileReader();
+    if (method === "file") {
+        const fileInput = document.getElementById("studentFile");
+        if (!fileInput.files[0]) {
+            alert("Please upload student list.");
+            return;
+        }
 
-    reader.onload = function(e) {
-        const lines = e.target.result.split("\n").slice(1);
-        const students = lines.map(line => line.trim()).filter(Boolean);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split("\n").slice(1);
+            const students = lines.map(line => line.trim()).filter(Boolean);
+            
+            // Execute your required saving method
+            const newClass = {
+                id: "c_" + Date.now(),
+                name: className,
+                students
+            };
+
+            const classes = JSON.parse(localStorage.getItem("classes")) || [];
+            classes.push(newClass);
+            localStorage.setItem("classes", JSON.stringify(classes));
+
+            alert("Class created successfully!");
+            location.reload();
+        };
+        reader.readAsText(fileInput.files[0]);
+
+    } else {
+        // Manual logic that mirrors your required saving method exactly
+        const manualInput = document.getElementById("manualStudentList").value;
+        const students = manualInput.split("\n").map(line => line.trim()).filter(Boolean);
+
+        if (students.length === 0) {
+            alert("Please enter at least one student name.");
+            return;
+        }
 
         const newClass = {
             id: "c_" + Date.now(),
@@ -78,9 +125,7 @@ function createClass() {
 
         alert("Class created successfully!");
         location.reload();
-    };
-
-    reader.readAsText(fileInput.files[0]);
+    }
 }
 
 function loadClasses() {
@@ -113,21 +158,112 @@ function deleteClass(id) {
     loadClasses();
 }
 
+let currentEditingClassId = null;
+
 function editClass(id) {
+    currentEditingClassId = id;
     const classes = JSON.parse(localStorage.getItem("classes")) || [];
-    const selected = classes.find(c => c.id === id);
+    const selectedClass = classes.find(c => c.id === id);
 
-    const newName = prompt("Edit Class Name:", selected.name);
-    if (!newName) return;
+    if (!selectedClass) return;
 
-    selected.name = newName;
+    // Fill the modal with current data
+    document.getElementById("editClassName").value = selectedClass.name;
+    renderModalStudentList(selectedClass.students);
+
+    // Show the modal
+    document.getElementById("editModal").style.display = "block";
+    document.getElementById("modalOverlay").style.display = "block";
+}
+
+function renderModalStudentList(students) {
+    const listDiv = document.getElementById("modalStudentList");
+    listDiv.innerHTML = "";
+
+    if (students.length === 0) {
+        listDiv.innerHTML = "<p style='color:#888;'>No students in this class.</p>";
+        return;
+    }
+
+    students.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.style.padding = "5px 0";
+        row.style.borderBottom = "1px solid #333";
+        
+        row.innerHTML = `
+            <span>${name}</span>
+            <button onclick="removeStudentFromEdit(${index})" style="background:#dc3545; color:white; border:none; padding:2px 8px; border-radius:3px; cursor:pointer;">Remove</button>
+        `;
+        listDiv.appendChild(row);
+    });
+}
+
+function removeStudentFromEdit(index) {
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const classIndex = classes.findIndex(c => c.id === currentEditingClassId);
+    
+    classes[classIndex].students.splice(index, 1);
+    
+    // Update the UI without closing the modal
     localStorage.setItem("classes", JSON.stringify(classes));
+    renderModalStudentList(classes[classIndex].students);
+}
 
-    loadClasses();
+function appendStudents() {
+    const textarea = document.getElementById("addMoreStudentsNames");
+    const newNames = textarea.value.split("\n").map(n => n.trim()).filter(Boolean);
+    
+    if (newNames.length === 0) return;
+
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const classIndex = classes.findIndex(c => c.id === currentEditingClassId);
+    
+    // Merge existing students with new ones
+    classes[classIndex].students = [...classes[classIndex].students, ...newNames];
+    
+    localStorage.setItem("classes", JSON.stringify(classes));
+    textarea.value = ""; // Clear input
+    renderModalStudentList(classes[classIndex].students);
+}
+
+function saveEditChanges() {
+    const newClassName = document.getElementById("editClassName").value.trim();
+    if (!newClassName) return alert("Class name cannot be empty.");
+
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const classIndex = classes.findIndex(c => c.id === currentEditingClassId);
+    
+    classes[classIndex].name = newClassName;
+    
+    localStorage.setItem("classes", JSON.stringify(classes));
+    alert("Changes saved!");
+    location.reload(); // Refresh main list
+}
+
+function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+    document.getElementById("modalOverlay").style.display = "none";
 }
 
 function goHome() {
     window.location.href = "index.html";
+}
+
+function toggleInputMethod() {
+    const method = document.querySelector('input[name="inputMethod"]:checked').value;
+    const fileSection = document.getElementById("fileUploadSection");
+    const manualSection = document.getElementById("manualEntrySection");
+
+    if (method === "file") {
+        fileSection.style.display = "block";
+        manualSection.style.display = "none";
+    } else {
+        fileSection.style.display = "none";
+        manualSection.style.display = "block";
+    }
 }
 
 function toggleDarkMode() {
@@ -151,9 +287,34 @@ function toggleDarkMode() {
     }
 
 loadTheme();
-
 loadClasses();
+toggleInputMethod();
 </script>
+
+<div id="modalOverlay" onclick="closeEditModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999;"></div>
+
+<div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#222; color:white; padding:20px; border-radius:10px; width:90%; max-width:500px; z-index:1000; max-height:80vh; overflow-y:auto; border:1px solid #444;">
+    <h2 style="margin-top:0;">Class Details</h2>
+    
+    <label>Class Name:</label><br>
+    <input type="text" id="editClassName" style="width:100%; margin-top:5px;">
+    
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+    
+    <h3>Students</h3>
+    <div id="modalStudentList"></div>
+    
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+    
+    <h4>Add More Students</h4>
+    <textarea id="addMoreStudentsNames" placeholder="Paste names here (one per line)" style="width:100%; height:60px;"></textarea>
+    <button onclick="appendStudents()" style="background:#28a745; color:white; width:100%; margin-top:5px;">Add to List</button>
+
+    <div style="margin-top:20px; display:flex; gap:10px;">
+        <button onclick="saveEditChanges()" style="flex:1; background:#007bff; color:white;">Save All Changes</button>
+        <button onclick="closeEditModal()" style="flex:1; background:#666; color:white;">Cancel</button>
+    </div>
+</div>
 
 </body>
 </html>
