@@ -1,0 +1,128 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mystyle.css">
+    <title>Assignment Tracking System V1</title>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="logo-container">
+        <img src="logo.png" alt="School Logo" class="school-logo">
+    </div>
+
+    <h1>Assignment Tracking System V1</h1>
+
+    <button onclick="toggleDarkMode()" id="themeToggle">
+        🌙
+    </button>
+</header>
+
+<section>
+    <h3>Create New Assignment</h3>
+
+    <select id="classSelect"></select>
+    <button onclick="goToClasses()">+ Create New Class</button>
+    <input type="text" id="classWork" placeholder="Class Assignment Name (e.g. English Literature W1)">
+    <input type="text" id="subjectName" placeholder="Subject (e.g. Mathematics)">
+    <br><br>
+    <button onclick="createAssignment()">Create new assignment</button>
+</section>
+
+<br>
+
+<section>
+    <button onclick="viewAssignment()">View Assignments</button>
+</section>
+
+<script>
+function loadClassesDropdown() {
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const select = document.getElementById("classSelect");
+
+    select.innerHTML = "";
+
+    if (classes.length === 0) {
+        select.innerHTML = "<option value=''>No Classes Created</option>";
+        return;
+    }
+
+    classes.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.textContent = c.name;
+        select.appendChild(option);
+    });
+}
+
+function createAssignment() {
+    const classId = document.getElementById("classSelect").value;
+    const classWork = document.getElementById("classWork").value.trim();
+    const subject = document.getElementById("subjectName").value.trim();
+
+    if (!classId || !classWork || !subject) {
+        alert("Please complete all fields");
+        return;
+    }
+
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const selectedClass = classes.find(c => c.id === classId);
+
+    const studentObjects = selectedClass.students.map(name => ({
+        name,
+        submitted: false
+    }));
+
+    const newAssignment = {
+        id: "a_" + Date.now(),
+        classId: selectedClass.id,
+        className: selectedClass.name,
+        title: classWork,
+        subject,
+        dateCreated: new Date().toLocaleDateString(),
+        students: studentObjects
+    };
+
+    const assignments = JSON.parse(localStorage.getItem("assignments")) || [];
+    assignments.push(newAssignment);
+    localStorage.setItem("assignments", JSON.stringify(assignments));
+
+    window.location.href = `assignment.html?id=${newAssignment.id}`;
+}
+
+function goToClasses() {
+    window.location.href = "classes.html";
+}
+
+function viewAssignment() {
+        window.location.href = "view.html";
+}
+
+function toggleDarkMode() {
+
+    const body = document.body;
+
+        if (body.classList.contains("dark")) {
+            body.classList.remove("dark");
+            body.classList.add("light");
+            localStorage.setItem("theme", "light");
+        } else {
+            body.classList.remove("light");
+            body.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        }
+    }
+
+    function loadTheme() {
+        const theme = localStorage.getItem("theme") || "light";
+        document.body.classList.add(theme);
+    }
+
+loadTheme();
+
+loadClassesDropdown();
+</script>
+
+</body>
+</html>

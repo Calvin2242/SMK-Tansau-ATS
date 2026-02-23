@@ -1,0 +1,138 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mystyle.css">
+    <title>Assignment Report</title>
+
+    <style>
+        /* Better print formatting */
+        @media print {
+            button {
+                display: none;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+        }
+    </style>
+</head>
+
+<body class="light">
+
+<header>
+    <div class="logo-container">
+        <img src="logo.png" alt="School Logo" class="school-logo">
+    </div>
+    <h1>Assignment Report</h1>
+    <button onclick="toggleDarkMode()" id="themeToggle">
+        🌙
+    </button>
+</header>
+
+<section id="reportSection">
+</section>
+
+<section>
+    <button onclick="exportPDF()">Export as PDF</button>
+    <button onclick="goBack()">Back</button>
+</section>
+
+<script>
+
+const id = new URLSearchParams(window.location.search).get("id");
+const assignments = JSON.parse(localStorage.getItem("assignments")) || [];
+const a = assignments.find(x => x.id === id);
+
+if (!a) {
+    alert("Assignment not found.");
+    window.location.href = "view.html";
+}
+
+const submitted = a.students.filter(s => s.submitted);
+const notSubmitted = a.students.filter(s => !s.submitted);
+
+const total = a.students.length;
+const submittedCount = submitted.length;
+const percentage = total === 0 ? 0 :
+    Math.round((submittedCount / total) * 100);
+
+document.getElementById("reportSection").innerHTML = `
+    <h3>${a.className} - ${a.title}</h3>
+    <p><strong>Subject:</strong> ${a.subject}</p>
+    <p><strong>Date Created:</strong> ${a.dateCreated}</p>
+
+    <hr>
+
+    <h4>Overall Submission Progress</h4>
+    <p>${submittedCount} / ${total} students submitted (${percentage}%)</p>
+
+    <div style="
+        background:#ddd;
+        border-radius:10px;
+        height:15px;
+        margin-bottom:20px;">
+        <div style="
+            width:${percentage}%;
+            background:#1f4e79;
+            height:15px;
+            border-radius:10px;">
+        </div>
+    </div>
+
+    <hr>
+
+    <h4>Submitted (${submitted.length})</h4>
+    <ul>
+        ${submitted.length === 0 ? "<li>None</li>" :
+            submitted.map(s => `<li>${s.name}</li>`).join("")}
+    </ul>
+
+    <hr>
+
+    <h4>Not Submitted (${notSubmitted.length})</h4>
+    <ul>
+        ${notSubmitted.length === 0 ? "<li>None</li>" :
+            notSubmitted.map(s => `<li>${s.name}</li>`).join("")}
+    </ul>
+`;
+
+function exportPDF() {
+    const originalTitle = document.title;
+    document.title = `${a.className} - ${a.title} Report`;
+    window.print();
+    document.title = originalTitle;
+}
+
+function goBack() {
+    window.location.href = "view.html";
+}
+
+function toggleDarkMode() {
+
+    const body = document.body;
+
+        if (body.classList.contains("dark")) {
+            body.classList.remove("dark");
+            body.classList.add("light");
+            localStorage.setItem("theme", "light");
+        } else {
+            body.classList.remove("light");
+            body.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        }
+    }
+
+    function loadTheme() {
+        const theme = localStorage.getItem("theme") || "light";
+        document.body.classList.add(theme);
+    }
+
+loadTheme();
+
+</script>
+
+</body>
+</html>

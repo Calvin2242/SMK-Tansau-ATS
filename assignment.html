@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mystyle.css">
+    <title>Assignment Submission</title>
+</head>
+<body class="light">
+
+<header>
+    <div class="logo-container">
+        <img src="logo.png" alt="School Logo" class="school-logo">
+    </div>
+    <h1>Assignment Submission</h1>
+    <button onclick="toggleDarkMode()" id="themeToggle">
+        🌙
+    </button>
+</header>
+
+<section>
+    <h3 id="assignmentTitle"></h3>
+    <p><strong>Date Created:</strong> <span id="assignmentDate"></span></p>
+
+    <table id="studentTable">
+        <tr>
+            <th>Student Name</th>
+            <th>Submitted</th>
+        </tr>
+    </table>
+
+    <br>
+    <button onclick="saveProgress()">Save</button>
+    <button onclick="goBack()">Back</button>
+</section>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const assignmentId = params.get("id");
+
+let assignments = JSON.parse(localStorage.getItem("assignments")) || [];
+let assignment = assignments.find(a => a.id === assignmentId);
+
+if (!assignment) {
+    alert("Assignment not found!");
+    window.location.href = "index.html";
+}
+
+document.getElementById("assignmentTitle").innerText =
+`${assignment.className} - ${assignment.title}`;
+
+document.getElementById("assignmentDate").innerText =
+assignment.dateCreated;
+
+const table = document.getElementById("studentTable");
+
+assignment.students.forEach((student, index) => {
+    const row = table.insertRow();
+    row.innerHTML = `
+        <td>${student.name}</td>
+        <td>
+            <input type="checkbox"
+                ${student.submitted ? "checked" : ""}
+                onchange="assignment.students[${index}].submitted = this.checked">
+        </td>
+    `;
+});
+
+function saveProgress() {
+    localStorage.setItem("assignments", JSON.stringify(assignments));
+    alert("Saved successfully!");
+}
+
+function goBack() {
+    window.location.href = "view.html";
+}
+
+function toggleDarkMode() {
+
+    const body = document.body;
+
+        if (body.classList.contains("dark")) {
+            body.classList.remove("dark");
+            body.classList.add("light");
+            localStorage.setItem("theme", "light");
+        } else {
+            body.classList.remove("light");
+            body.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        }
+    }
+
+    function loadTheme() {
+        const theme = localStorage.getItem("theme") || "light";
+        document.body.classList.add(theme);
+    }
+
+loadTheme();
+</script>
+
+</body>
+</html>
