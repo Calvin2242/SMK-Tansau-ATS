@@ -2,7 +2,7 @@
 <html>
 <head>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="mystyle.css">
+<link rel="stylesheet" href="mystyle.css?v=1">
 <title>Manage Classes</title>
 </head>
 
@@ -25,10 +25,12 @@
     <br><br>
 
     <label>
-        <input type="radio" name="inputMethod" value="file" checked onclick="toggleInputMethod()"> Upload CSV
+        Upload CSV
+        <input style="appearance: auto;" type="radio" name="inputMethod" value="file" checked onclick="toggleInputMethod()">
     </label>
     <label>
-        <input type="radio" name="inputMethod" value="manual" onclick="toggleInputMethod()"> Manual Entry
+        Manual Entry
+        <input style="appearance: auto;" type="radio" name="inputMethod" value="manual" onclick="toggleInputMethod()">
     </label>
     <br><br>
 
@@ -318,3 +320,4 @@ toggleInputMethod();
 
 </body>
 </html>
+

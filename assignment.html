@@ -2,7 +2,7 @@
 <html>
 <head>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="mystyle.css">
+    <link rel="stylesheet" href="mystyle.css?v=1">
     <title>Assignment Submission</title>
 </head>
 <body class="light">
@@ -25,6 +25,7 @@
         <tr>
             <th>Student Name</th>
             <th>Submitted</th>
+            <th>Remarks</th>
         </tr>
     </table>
 
@@ -61,6 +62,13 @@ assignment.students.forEach((student, index) => {
             <input type="checkbox"
                 ${student.submitted ? "checked" : ""}
                 onchange="assignment.students[${index}].submitted = this.checked">
+        </td>
+        <td>
+            <input type="text"
+                value="${student.remarks || ''}"
+                placeholder="Add remarks..."
+                onchange="assignment.students[${index}].remarks = this.value"
+                style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d1d1d6;">
         </td>
     `;
 });

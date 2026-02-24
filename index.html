@@ -2,8 +2,8 @@
 <html>
 <head>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="mystyle.css">
-    <title>Assignment Tracking System V1.2</title>
+    <link rel="stylesheet" href="mystyle.css?v=1">
+    <title>Assignment Tracking System V1.8a</title>
 </head>
 <body>
 
@@ -12,7 +12,7 @@
         <img src="logo.png" alt="School Logo" class="school-logo">
     </div>
 
-    <h1>Assignment Tracking System V1.2</h1>
+    <h1>Assignment Tracking System V1.8a</h1>
 
     <button onclick="toggleDarkMode()" id="themeToggle">
         🌙
@@ -34,6 +34,7 @@
 
 <section>
     <button onclick="viewAssignment()">View Assignments</button>
+    <button onclick="viewAttendance()">View Attendance</button>
 </section>
 
 <script>
@@ -54,6 +55,102 @@ function loadClassesDropdown() {
         option.textContent = c.name;
         select.appendChild(option);
     });
+}
+
+function createAttendance() {
+    const headClassId = localStorage.getItem("headClassId");
+    const date = document.getElementById("date").value;
+    const isHoliday = document.getElementById("publicHolidayCheckbox").checked;
+
+    if (!date) {
+        alert("Please select a date.");
+        return;
+    }
+
+    if (!headClassId) {
+        alert("Please set head class first.");
+        return;
+    }
+
+    // Load data for validation
+    let attendanceRecords = JSON.parse(localStorage.getItem("attendance")) || [];
+    let holidays = JSON.parse(localStorage.getItem("publicHolidays")) || [];
+
+    // --- CASE 1: USER IS TRYING TO MARK A PUBLIC HOLIDAY ---
+    if (isHoliday) {
+        // Check if ANY class has attendance on this date
+        const attendanceOnThisDate = attendanceRecords.some(a => a.date === date && !a.isPublicHoliday);
+        
+        if (attendanceOnThisDate) {
+            alert("Cannot mark as Public Holiday: Attendance records already exist for this date.");
+            return;
+        }
+
+        if (holidays.includes(date)) {
+            alert("This date is already marked as a Public Holiday.");
+            return;
+        }
+
+        // Save to Holiday list
+        holidays.push(date);
+        localStorage.setItem("publicHolidays", JSON.stringify(holidays));
+
+        // Create a special record in attendance for visibility in viewAttendance.html
+        const holidayRecord = {
+            id: "hol_" + Date.now(),
+            date: date,
+            isPublicHoliday: true
+        };
+        attendanceRecords.push(holidayRecord);
+        localStorage.setItem("attendance", JSON.stringify(attendanceRecords));
+
+        alert("Public Holiday saved successfully.");
+        location.reload(); // Refresh to clear inputs
+        return;
+    }
+
+    // --- CASE 2: USER IS TRYING TO CREATE NORMAL ATTENDANCE ---
+    // Check if the date is a holiday first
+    if (holidays.includes(date)) {
+        alert("Cannot create attendance: This date is a marked Public Holiday. Please delete the holiday first.");
+        return;
+    }
+
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const selectedClass = classes.find(c => c.id === headClassId);
+
+    // Check if attendance already exists for THIS class on this date
+    const existing = attendanceRecords.find(a =>
+        a.classId === headClassId && a.date === date
+    );
+
+    if (existing) {
+        if (!confirm("Attendance already exists for this class on this date. Edit it?")) return;
+        window.location.href = `attendance.html?id=${existing.id}`;
+        return;
+    }
+
+    // If all checks pass, create the record
+    const students = selectedClass.students.map(name => ({
+        name,
+        present: false,
+        leftEarly: false,
+        reason: ""
+    }));
+
+    const newAttendance = {
+        id: "att_" + Date.now(),
+        classId: headClassId,
+        className: selectedClass.name,
+        date,
+        students,
+        isPublicHoliday: false
+    };
+
+    attendanceRecords.push(newAttendance);
+    localStorage.setItem("attendance", JSON.stringify(attendanceRecords));
+
+    window.location.href = `attendance.html?id=${newAttendance.id}`;
 }
 
 function createAssignment() {
@@ -96,7 +193,114 @@ function goToClasses() {
 }
 
 function viewAssignment() {
-        window.location.href = "view.html";
+    window.location.href = "view.html";
+}
+
+function viewAttendance() {
+    window.location.href = "viewAttendance.html";
+}
+
+function renderHeadClassUI() {
+    const container = document.getElementById("headClassContainer");
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+    const headClassId = localStorage.getItem("headClassId");
+
+    container.innerHTML = "";
+
+    // If no classes exist
+    if (classes.length === 0) {
+        container.innerHTML = `
+            <button onclick="window.location.href='classes.html'">
+                Create Class First
+            </button>
+        `;
+        return;
+    }
+
+    // If no head class selected yet
+    if (!headClassId) {
+        container.innerHTML = `
+            <select id="headClassSelect">
+                <option value="">-- Select Attendance Class --</option>
+                ${classes.map(c =>
+                    `<option value="${c.id}">${c.name}</option>`
+                ).join("")}
+                <option value="new">+ Create New Class</option>
+            </select>
+
+            <button onclick="setHeadClassFromDropdown()">
+                Set
+            </button>
+        `;
+        return;
+    }
+
+    // If head class already selected
+    const selected = classes.find(c => c.id === headClassId);
+
+    if (!selected) {
+        localStorage.removeItem("headClassId");
+        renderHeadClassUI();
+        return;
+    }
+
+    container.innerHTML = `
+        <strong>${selected.name}</strong>
+        <button onclick="changeHeadClass()" style="margin-left:10px;">
+            Change
+        </button>
+    `;
+}
+
+function setHeadClassFromDropdown() {
+    const select = document.getElementById("headClassSelect");
+    const selectedValue = select.value;
+
+    if (selectedValue === "new") {
+        window.location.href = "classes.html";
+        return;
+    }
+
+    if (!selectedValue) {
+        alert("Please select a class.");
+        return;
+    }
+
+    localStorage.setItem("headClassId", selectedValue);
+    renderHeadClassUI();
+}
+
+function setHeadClass() {
+    const classes = JSON.parse(localStorage.getItem("classes")) || [];
+
+    if (classes.length === 0) {
+        alert("No classes available. Please create a class first.");
+        return;
+    }
+
+    const classNames = classes.map(c => c.name).join("\n");
+    const selectedName = prompt("Enter the class name:\n\n" + classNames);
+
+    const selectedClass = classes.find(c => c.name === selectedName);
+
+    if (!selectedClass) {
+        alert("Invalid class name.");
+        return;
+    }
+
+    localStorage.setItem("headClassId", selectedClass.id);
+    renderHeadClassUI();
+}
+
+function changeHeadClass() {
+    const confirmChange = confirm(
+        "Are you sure you want to change the attendance class?"
+    );
+
+    if (!confirmChange) return;
+
+    localStorage.removeItem("headClassId");
+    renderHeadClassUI();
 }
 
 function toggleDarkMode() {
@@ -114,16 +318,21 @@ function toggleDarkMode() {
         }
     }
 
-    function loadTheme() {
-        const theme = localStorage.getItem("theme") || "light";
-        document.body.classList.add(theme);
-    }
+function loadTheme() {
+    const theme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(theme);
+}
+
+function setTodayDate() {
+    const today = new Date().toLocaleDateString('en-CA');
+    document.getElementById("date").value = today;
+}
 
 loadTheme();
-
 loadClassesDropdown();
+setTodayDate();
+renderHeadClassUI();
 </script>
 
 </body>
 </html>
-
