@@ -236,3 +236,114 @@ body.dark .checkbox-item:hover {
         white-space: nowrap;
     }
 }
+
+/* Input Method Selection */
+.input-method {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0 20px;
+}
+
+.method-option {
+    flex: 1;
+    cursor: pointer;
+    margin: 0;
+}
+
+.method-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.method-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    min-height: 70px;
+
+    background: #2a2a2d;
+    border: 2px solid #3a3a3d;
+    border-radius: 12px;
+
+    transition: all 0.2s ease;
+}
+
+.method-card:hover {
+    border-color: #666;
+    background: #303033;
+    transform: translateY(-1px);
+}
+
+/* Selected card */
+.method-option input:checked + .method-card {
+    border-color: #d6a83b;
+    background: #332d20;
+    box-shadow: 0 0 0 1px rgba(214, 168, 59, 0.15);
+}
+
+/* Icon */
+.method-icon {
+    font-size: 25px;
+    width: 38px;
+    text-align: center;
+}
+
+/* Text */
+.method-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.method-text strong {
+    font-size: 15px;
+    color: #fff;
+}
+
+.method-text small {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* Custom radio circle */
+.radio-indicator {
+    margin-left: auto;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #777;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.method-option input:checked + .method-card .radio-indicator {
+    border-color: #d6a83b;
+}
+
+.method-option input:checked + .method-card .radio-indicator::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #d6a83b;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Keyboard accessibility */
+.method-option input:focus-visible + .method-card {
+    outline: 2px solid #d6a83b;
+    outline-offset: 2px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .input-method {
+        flex-direction: column;
+    }
+}

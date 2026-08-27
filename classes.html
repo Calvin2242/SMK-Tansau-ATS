@@ -24,14 +24,31 @@
     <input type="text" id="newClassName" placeholder="Class Name (e.g. 2 Mutiara)">
     <br><br>
 
-    <label>
-        Upload CSV
-        <input style="appearance: auto;" type="radio" name="inputMethod" value="file" checked onclick="toggleInputMethod()">
+    <div class="input-method">
+    <label class="method-option">
+        <input type="radio" name="inputMethod" value="file" checked onclick="toggleInputMethod()">
+        <span class="method-card">
+            <span class="method-icon">📄</span>
+            <span class="method-text">
+                <strong>Upload CSV</strong>
+                <small>Import students from a CSV file</small>
+            </span>
+            <span class="radio-indicator"></span>
+        </span>
     </label>
-    <label>
-        Manual Entry
-        <input style="appearance: auto;" type="radio" name="inputMethod" value="manual" onclick="toggleInputMethod()">
+
+    <label class="method-option">
+        <input type="radio" name="inputMethod" value="manual" onclick="toggleInputMethod()">
+        <span class="method-card">
+            <span class="method-icon">✏️</span>
+            <span class="method-text">
+                <strong>Manual Entry</strong>
+                <small>Enter student names manually</small>
+            </span>
+            <span class="radio-indicator"></span>
+        </span>
     </label>
+</div>
     <br><br>
 
     <div id="fileUploadSection">
